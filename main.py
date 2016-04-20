@@ -1,3 +1,4 @@
+import sys, argparse
 from comentario import Comentario
 
 # Le arquivo de comentarios e retorna vetor com objetos separados
@@ -34,15 +35,25 @@ def removeStopWords( dataset, stopword_list ):
 
 # Metodo principal
 def main():
+    parser = argparse.ArgumentParser(description='KNN for IMDB Dataset')
+    parser.add_argument('-i','--train', help='Arquivo de treino, informe a url do arquivo para leitura dos dados',required=True)
+    parser.add_argument('-t','--test', help='Arquivo de teste, informe a url do arquivo para leitura dos dados', required=True)
+    parser.add_argument('-k','--neighbors', help='Numero de vizinhos a ser considerado no processo de treinamento', required=True)
+    parser.add_argument('-s','--stopwords', help='Arquivo de stopwords, informe a url do arquivo de stopwords a serem desconsideradas', required=False)
+    args = parser.parse_args()
+
+    print "Argumentos = ",args
+
     teste_inicial = readComments( "files/teste_inicial.txt" )
-    imdb_test = readComments( "files/imdb_test" )
-    imdb_train = readComments( "files/imdb_train" )
-    stopword_list = readStopWords( "files/stopword_list" )
+    imdb_test = readComments( args.test )
+    imdb_train = readComments( args.train )
+    num_vizinhos = int( args.neighbors )
 
-    removeStopWords( teste_inicial, stopword_list )
-    for c in teste_inicial:
-        print c.palavras
+    if args.stopwords is not None:
+        stopword_list = readStopWords( args.stopwords )
+        removeStopWords( imdb_train, stopword_list )
+        removeStopWords( imdb_test, stopword_list )
 
-    print "KNN = ",imdb_test[0].getNeighborsClass(imdb_train[:100], 100),
+    print "KNN = ",imdb_test[0].getNeighborsClass(imdb_train, num_vizinhos),
     print " REAL = ",imdb_test[0].classificacao
 main()
