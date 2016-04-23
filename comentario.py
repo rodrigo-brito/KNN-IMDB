@@ -6,6 +6,7 @@ class Comentario(object):
         self.classificacao = classificacao
         self.texto = texto
         self.palavras = texto.split(" ")
+        self.neighbors = None
 
     # Metodo de impressao de objeto
     def __str__( self ):
@@ -15,6 +16,7 @@ class Comentario(object):
     def hasWord( self, word ):
         return word in self.palavras
 
+    # Calcula a distancia de Jaccard para um dado comentario
     def jaccardDistance( self, comentario):
         # Array de palavras unicas
         uniqWords  = []
@@ -42,23 +44,38 @@ class Comentario(object):
         return f11/(f10+f01+f11)
 
     # Retorna lista de vizinhos mais semelhantes
-    def getNeighbors(self, trainList, size ):
-        neighbors = trainList[:] #Copia vetor para alteracao
-        # Calcula similaridade
-        for comentario in neighbors:
-            comentario.jaccard = self.jaccardDistance( comentario )
-        neighbors.sort(key=lambda comentario: comentario.jaccard, reverse=True)
-        return neighbors[:size]
+    def getNeighbors( self, trainList ):
+        # Nao recalcula vizinhanca caso o comentario ja possua a estrutura
+        # Utilizado apenas para no metodo de captura de multiplos tamanhos de vizinhancas (Fitting)
+        if self.neighbors is not None:
+            return self.neighbors
+        else:
+            neighbors_new = [] #Copia vetor para alteracao
+            # Calcula similaridade
+            for comentario in trainList:
+                distancia = self.jaccardDistance( comentario )
+                neighbors_new.append( Vizinho( comentario.classificacao, distancia ))
+            neighbors_new.sort(key=lambda vizinho: vizinho.distancia, reverse=True)
+            self.neighbors = neighbors_new
+            return neighbors_new
 
     # Verifica a classificacao da maioria dos vizinhos
-    def getNeighborsClass( self, trainList, size ):
-        neighbors = self.getNeighbors( trainList, size )
+    def getNeighborsClassification( self, trainList, size ):
+        neighbors = self.getNeighbors( trainList )
         count = 0
-        for neighbor in neighbors:
+        for neighbor in neighbors[:size]:
             if neighbor.classificacao == '1':
                 count+=1
-        if count >= size/2: #se mais da metade dos vizinhos for 1
-            return 1
+        if count > size/2.0: #se mais da metade dos vizinhos for 1
+            return '1'
         else:
-            return 0
+            return '0'
 
+class Vizinho(object):
+    classificacao = None
+    distancia = None
+    def __init__( self, classificacao, distancia ):
+        self.classificacao = classificacao
+        self.distancia = distancia
+    def __str__( self ):
+        return self.classificacao+' - '+repr(self.distancia)

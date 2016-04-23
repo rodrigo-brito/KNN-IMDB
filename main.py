@@ -5,7 +5,6 @@ from comentario import Comentario
 def readComments( nome_arquivo ):
     comentarios = []
     arquivo = open( nome_arquivo, 'r' )  # abre o arquivo para leitura
-    print( "Lendo arquivo '%s'..." %nome_arquivo )
     for linha in arquivo: # percorre cada linha do arquivo
         classificaco = linha[0] # primeira posicao define classificacao
         texto = linha[2:].lower().replace( '\n','' ) # restante da linha define o comentario
@@ -18,7 +17,6 @@ def readComments( nome_arquivo ):
 def readStopWords( nome_arquivo ):
     stopWords = []
     arquivo = open( nome_arquivo, 'r' )  # abre o arquivo para leitura
-    print( "Lendo arquivo '%s'..." %nome_arquivo )
     for linha in arquivo: # percorre cada linha do arquivo
         stopWords.append( linha.lower().replace('\n','') ) # limpa texto e adiciona ao final da estrutura
     arquivo.close()  # depois do uso, fecha o arquivo
@@ -26,15 +24,21 @@ def readStopWords( nome_arquivo ):
 
 # Percorre cada comentario e remove as palavras presentes no stopworlist
 def removeStopWords( dataset, stopword_list ):
-    print "Removendo StopWords..."
     for data in dataset:
         for word in data.palavras:
             if word in stopword_list:
                 data.palavras.remove( word )
 
+# Metodo para verificacao de multiplas vizinhancas (1 a 200) (Calculo de Fitting)
+def getAllNeighbors( imdb_test, imdb_train ):
+    for v in range(1,200):
+        print "V = ",v,"\n-----------"
+        for comentario in imdb_test:
+            print comentario.getNeighborsClassification(imdb_train, v),"\t",comentario.classificacao
 
 # Metodo principal
 def main():
+    # Definicao de parametros de entrada via terminal
     parser = argparse.ArgumentParser(description='KNN for IMDB Dataset')
     parser.add_argument('-i','--train', help='Arquivo de treino, informe a url do arquivo para leitura dos dados',required=True)
     parser.add_argument('-t','--test', help='Arquivo de teste, informe a url do arquivo para leitura dos dados', required=True)
@@ -42,18 +46,18 @@ def main():
     parser.add_argument('-s','--stopwords', help='Arquivo de stopwords, informe a url do arquivo de stopwords a serem desconsideradas', required=False)
     args = parser.parse_args()
 
-    print "Argumentos = ",args
-
-    teste_inicial = readComments( "files/teste_inicial.txt" )
+    # Efetura leitura de arquivos
     imdb_test = readComments( args.test )
     imdb_train = readComments( args.train )
     num_vizinhos = int( args.neighbors )
 
+    # Remove StopWords caso passado por parametro
     if args.stopwords is not None:
         stopword_list = readStopWords( args.stopwords )
         removeStopWords( imdb_train, stopword_list )
         removeStopWords( imdb_test, stopword_list )
 
-    print "KNN = ",imdb_test[0].getNeighborsClass(imdb_train, num_vizinhos),
-    print " REAL = ",imdb_test[0].classificacao
+    # Imprime resultado final para cada comentario da base de teste
+    for comentario in imdb_test:
+        print comentario.getNeighborsClassification(imdb_train, num_vizinhos)
 main()
