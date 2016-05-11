@@ -1,5 +1,3 @@
-import numpy
-
 class Comentario(object):
     # Metodo construtor
     def __init__( self, classificacao, texto ):
@@ -18,30 +16,26 @@ class Comentario(object):
 
     # Calcula a distancia de Jaccard para um dado comentario
     def jaccardDistance( self, comentario):
-        # Array de palavras unicas
-        uniqWords  = []
-        # Array a uniao de palavras registradas em ambos comentarios
-        allWords 	= numpy.concatenate([comentario.palavras, self.palavras])
-
-        # Montando lista de palavras unicas
-        for word in allWords:
-            if word not in uniqWords:
-                uniqWords.append(word)
+        # Array a uniao de palavras distintas registradas em ambos comentarios
+        uniqWords = list(set(comentario.palavras) | set(self.palavras))
 
         # Variaveis para calculo de Jaccard
         f11 = 0.0
-        f10 = 0.0
-        f01 = 0.0
+        f10ef01 = 0.0
 
+        #Percorre as palavras e verifica a frequencia
         for word in uniqWords:
             if self.hasWord( word ) and comentario.hasWord( word ):
                 f11+=1.0
-            elif self.hasWord( word ):
-                f10+=1.0
-            elif comentario.hasWord( word ):
-                f01+=1.0
+            else:
+                f10ef01+=1.0
         # Calcula a distancia de Jaccard
-        return f11/(f10+f01+f11)
+        return f11/(f11+f10ef01)
+
+    def jaccardDistance2( self, comentario ):
+        str1 = set(comentario.palavras)
+        str2 = set(self.palavras)
+        return float(len(str1 & str2)) / len(str1 | str2)
 
     # Retorna lista de vizinhos mais semelhantes
     def getNeighbors( self, trainList ):
@@ -53,7 +47,7 @@ class Comentario(object):
             neighbors_new = [] #Copia vetor para alteracao
             # Calcula similaridade
             for comentario in trainList:
-                distancia = self.jaccardDistance( comentario )
+                distancia = self.jaccardDistance2( comentario )
                 neighbors_new.append( Vizinho( comentario.classificacao, distancia ))
             neighbors_new.sort(key=lambda vizinho: vizinho.distancia, reverse=True)
             self.neighbors = neighbors_new
@@ -62,18 +56,21 @@ class Comentario(object):
     # Verifica a classificacao da maioria dos vizinhos
     def getNeighborsClassification( self, trainList, size ):
         neighbors = self.getNeighbors( trainList )
-        count = 0
-        for neighbor in neighbors[:size]:
+
+        qtdeTipo1 = 0.0
+        qtdeTipo0 = 0.0
+
+        for i,neighbor in enumerate(neighbors[:size]):
             if neighbor.classificacao == '1':
-                count+=1
-        if count > size/2.0: #se mais da metade dos vizinhos for 1
+                qtdeTipo1 += size-i
+            else:
+                qtdeTipo0 += size-i
+        if qtdeTipo1 > qtdeTipo0: #se mais da metade dos vizinhos for 1 logo o comentario eh 1
             return '1'
         else:
             return '0'
 
 class Vizinho(object):
-    classificacao = None
-    distancia = None
     def __init__( self, classificacao, distancia ):
         self.classificacao = classificacao
         self.distancia = distancia
