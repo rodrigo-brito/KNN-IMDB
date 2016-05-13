@@ -32,6 +32,7 @@ class Comentario(object):
         # Calcula a distancia de Jaccard
         return f11/(f11+f10ef01)
 
+    # Metodo otimizado para calculo da distancia de Jaccard
     def jaccardDistance2( self, comentario ):
         str1 = set(comentario.palavras)
         str2 = set(self.palavras)

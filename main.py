@@ -42,6 +42,7 @@ def getAllNeighbors( imdb_test, imdb_train ):
             print comentario.classificacao,"\t",comentario.getNeighborsClassification(imdb_train, v)
 
 # Analisa a quantidade de elementos de cada tipo em um dataset passado
+# Analisa o balanceamento da base fornecida
 def analiseDataset( dataset ):
     total = len(dataset)
     f0 = 0.0
@@ -55,6 +56,7 @@ def analiseDataset( dataset ):
     print "F1 = ",f1
 
 # Calulcula a qualidade da solucao retornada
+# Metodo utilizado no processo de analise de qualidade
 def calculaQualidade( imdb_test, imdb_train, vinzinhanca ):
     f11 = 0.0
     f10 = 0.0
@@ -93,17 +95,13 @@ def main():
     parser.add_argument('-t','--test', help='Arquivo de teste, informe a url do arquivo para leitura dos dados', required=True)
     parser.add_argument('-k','--neighbors', help='Numero de vizinhos a ser considerado no processo de treinamento', required=True)
     parser.add_argument('-s','--stopwords', help='Arquivo de stopwords, informe a url do arquivo de stopwords a serem desconsideradas', required=False)
-    parser.add_argument('-p','--path', help='Identifica teste de fracionamento para multiplas vizinhancas', required=False)
+    parser.add_argument('-f','--folds', help='Identifica teste de fracionamento para multiplas vizinhancas (K-Folds)', required=False)
     args = parser.parse_args()
 
     # Efetura leitura de arquivos
     imdb_test = readComments( args.test )
     imdb_train = readComments( args.train )
     num_vizinhos = int( args.neighbors )
-    print "Test"
-    analiseDataset(imdb_test)
-    print "Train"
-    analiseDataset(imdb_train)
 
     # Remove StopWords caso passado por parametro
     if args.stopwords is not None:
@@ -112,11 +110,10 @@ def main():
         removeStopWords( imdb_test, stopword_list )
 
     # Caso seja uma execucao de treino, testa para todas as vizinhancas
-    if args.path is not None:
+    if args.folds is not None:
         qualityNeighborsSize( imdb_test, imdb_train )
     else:
-        # Imprime resultado final para cada comentario da base de teste
-        #for comentario in imdb_test:
-            #print comentario.getNeighborsClassification(imdb_train, num_vizinhos)
-        calculaQualidade( imdb_test, imdb_train, num_vizinhos )
+        # Imprime classificacao final para cada comentario da base de teste
+        for comentario in imdb_test:
+            print comentario.getNeighborsClassification(imdb_train, num_vizinhos)
 main()
